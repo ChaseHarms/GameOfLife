@@ -33,10 +33,17 @@ namespace GameOfLife
         bool gridLinesOn = true;
         bool finiteOn = true;
         bool toroidalOn = false;
+        int cellsAlive = 0;
 
         public Form1()
         {
             InitializeComponent();
+
+            //setting preferences
+            graphicsPanel1.BackColor = Properties.Settings.Default.BackColor;
+            cellColor = Properties.Settings.Default.CellColor;
+            gridColor = Properties.Settings.Default.GridColor;
+            timer.Interval = Properties.Settings.Default.Timer;
 
             // Setup the timer
             timer.Interval = 100; // milliseconds
@@ -77,7 +84,9 @@ namespace GameOfLife
                             scratchPad[x, y] = true;
                     }
 
-                    // turn on/off in the scratch pad
+                    //Cells alive count
+                    if (universe[x, y] == true)
+                        cellsAlive++;
                 }
             }
 
@@ -93,6 +102,18 @@ namespace GameOfLife
                 for (int x = 0; x < scratchPad.GetLength(0); x++)
                 {
                     scratchPad[x, y] = false;
+                }
+            }
+
+            //cell alive count display
+            toolStripStatusLabel1.Text = $"Cells Alive = " + cellsAlive;
+
+            //reset cell alive count
+            for (int y = 0; y < universe.GetLength(1); y++)
+            {
+                for (int x = 0; x < universe.GetLength(0); x++)
+                {
+                    cellsAlive = 0;
                 }
             }
 
@@ -157,6 +178,7 @@ namespace GameOfLife
                     if (gridLinesOn == true)
                         e.Graphics.DrawRectangle(gridPen, cellRect.X, cellRect.Y, cellRect.Width, cellRect.Height);
 
+                    //neighbor count enable/disable
                     if (neighborCountOn == true)
                     {
                         // cell neighbor count finite
@@ -387,15 +409,7 @@ namespace GameOfLife
 
         private void hUDToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //if (neighborCountOn == true)
-            //{
-            //    neighborCountOn = false;
-            //}
-            //else if (neighborCountOn == false)
-            //{
-            //    neighborCountOn = true;
-            //}
-            //graphicsPanel1.Invalidate();
+            
         }
 
         private void neighborCountToolStripMenuItem_Click(object sender, EventArgs e)
@@ -466,6 +480,39 @@ namespace GameOfLife
         private void fromTimeToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void resetToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.Reset();
+
+            //setting preferences
+            graphicsPanel1.BackColor = Properties.Settings.Default.BackColor;
+            cellColor = Properties.Settings.Default.CellColor;
+            gridColor = Properties.Settings.Default.GridColor;
+            timer.Interval = Properties.Settings.Default.Timer;
+        }
+
+        private void revertToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.Reload();
+
+            //setting preferences
+            graphicsPanel1.BackColor = Properties.Settings.Default.BackColor;
+            cellColor = Properties.Settings.Default.CellColor;
+            gridColor = Properties.Settings.Default.GridColor;
+            timer.Interval = Properties.Settings.Default.Timer;
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            //update settings
+            Properties.Settings.Default.BackColor = graphicsPanel1.BackColor;
+            Properties.Settings.Default.CellColor = cellColor;
+            Properties.Settings.Default.GridColor = gridColor;
+            Properties.Settings.Default.Timer = timer.Interval;
+
+            Properties.Settings.Default.Save();
         }
     }
 }
