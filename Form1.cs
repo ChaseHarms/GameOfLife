@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,6 +34,8 @@ namespace GameOfLife
         bool gridLinesOn = true;
         bool finiteOn = true;
         bool toroidalOn = false;
+        string BoundryType = "Finite";
+        bool HUDon = true;
         int cellsAlive = 0;
 
         public Form1()
@@ -107,15 +110,6 @@ namespace GameOfLife
 
             //cell alive count display
             toolStripStatusLabel1.Text = $"Cells Alive = " + cellsAlive;
-
-            //reset cell alive count
-            for (int y = 0; y < universe.GetLength(1); y++)
-            {
-                for (int x = 0; x < universe.GetLength(0); x++)
-                {
-                    cellsAlive = 0;
-                }
-            }
 
             // Increment generation count
             generations++;
@@ -217,12 +211,35 @@ namespace GameOfLife
                     }
                 }
             }
+            //HUD Display
+            if(HUDon == true)
+            {
+                //formatting
+                Font fontHUD = new Font("Microsoft Sans Serif", 12f);
+
+                StringFormat stringFormatHUD = new StringFormat();
+                stringFormatHUD.Alignment = StringAlignment.Near;
+                stringFormatHUD.LineAlignment = StringAlignment.Far;
+
+                Rectangle HUDd = Rectangle.Empty;
+                HUDd.Width = graphicsPanel1.ClientSize.Width;
+                HUDd.Height = graphicsPanel1.ClientSize.Height;
+
+                string HUD = $"Generations: {generations}\nCell Count: {cellsAlive}\nBoundry Type: {BoundryType}";
+
+                //Draw Hud
+                e.Graphics.DrawString(HUD, fontHUD, Brushes.Red, HUDd, stringFormatHUD);
+            }
+
+            //cells alive reset
+            cellsAlive = 0;
 
             // Cleaning up pens and brushes
             gridPen.Dispose();
             cellBrush.Dispose();
         }
 
+        //Mouse Click
         private void graphicsPanel1_MouseClick(object sender, MouseEventArgs e)
         {
             // If the left mouse button was clicked
@@ -246,11 +263,13 @@ namespace GameOfLife
             }
         }
 
+        //Exit Button
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();
         }
 
+        //Star, Stop, And Next Generation Buttons
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
             timer.Enabled = true;
@@ -266,6 +285,7 @@ namespace GameOfLife
             NextGeneration();
         }
 
+        //New Button
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // Iterate through the universe in the y, top to bottom
@@ -281,6 +301,8 @@ namespace GameOfLife
             generations = 0;
             graphicsPanel1.Invalidate();
         }
+
+        //Neighbor Counting Methods
         private int CountNeighborsFinite(int x, int y)
         {
             int count = 0;
@@ -368,6 +390,7 @@ namespace GameOfLife
             return count;
         }
 
+        //Color Customization
         private void backColorToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ColorDialog backColor = new ColorDialog();
@@ -407,11 +430,20 @@ namespace GameOfLife
             }
         }
 
+        //HUD Toggle
         private void hUDToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            
+            //HUD button toggle
+            if (HUDon == true)
+            {
+                HUDon = false;
+            }
+            else if (HUDon == false)
+                HUDon = true;
+            graphicsPanel1.Invalidate();
         }
 
+        //Neighbor Count Toggle
         private void neighborCountToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (neighborCountOn == true)
@@ -425,6 +457,7 @@ namespace GameOfLife
             graphicsPanel1.Invalidate();
         }
 
+        //Grid Toggle
         private void gridToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (gridLinesOn == true)
@@ -438,6 +471,7 @@ namespace GameOfLife
             graphicsPanel1.Invalidate();
         }
 
+        //Options Dialog Box
         private void optionsToolStripMenuItem2_Click(object sender, EventArgs e)
         {
             Form2 dlg = new Form2();
@@ -449,19 +483,19 @@ namespace GameOfLife
             {
                 // modify
                 timer.Interval = dlg.getTimer();
-                //int width = universe.Length / dlg.getXaxis();
-                //int height = universe.Length / dlg.getYaxis();
-                //
-                //universe = universe[width, height];
+
+                //universe = new bool[width, height];
 
                 graphicsPanel1.Invalidate();
             }
         }
 
+        //Finite and Toroidal Switch
         private void finiteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             finiteOn = true;
             toroidalOn = false;
+            BoundryType = "Finite";
             graphicsPanel1.Invalidate();
         }
 
@@ -469,9 +503,11 @@ namespace GameOfLife
         {
             finiteOn = false;
             toroidalOn = true;
+            BoundryType = "Toroidal";
             graphicsPanel1.Invalidate();
         }
 
+        //Randomization
         private void fromCurrentSeedToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
@@ -482,6 +518,7 @@ namespace GameOfLife
 
         }
 
+        //Reset and Reload
         private void resetToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Properties.Settings.Default.Reset();
@@ -504,6 +541,7 @@ namespace GameOfLife
             timer.Interval = Properties.Settings.Default.Timer;
         }
 
+        //Form Closed
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             //update settings
@@ -513,6 +551,139 @@ namespace GameOfLife
             Properties.Settings.Default.Timer = timer.Interval;
 
             Properties.Settings.Default.Save();
+        }
+
+        //Save and Open
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.Filter = "All Files|*.*|Cells|*.cells";
+            dlg.FilterIndex = 2; dlg.DefaultExt = "cells";
+
+
+            if (DialogResult.OK == dlg.ShowDialog())
+            {
+                StreamWriter writer = new StreamWriter(dlg.FileName);
+
+                // Write any comments you want to include first.
+                // Prefix all comment strings with an exclamation point.
+                // Use WriteLine to write the strings to the file. 
+                // It appends a CRLF for you.
+                writer.WriteLine("!Save File");
+
+                // Iterate through the universe one row at a time.
+                for (int y = 0; y < universe.GetLength(1); y++)
+                {
+                    // Create a string to represent the current row.
+                    String currentRow = string.Empty;
+
+                    // Iterate through the current row one cell at a time.
+                    for (int x = 0; x < universe.GetLength(0); x++)
+                    {
+                        // If the universe[x,y] is alive then append 'O' (capital O)
+                        // to the row string.
+                        if (universe[x, y] == true)
+                            currentRow += 'O';
+
+                        // Else if the universe[x,y] is dead then append '.' (period)
+                        // to the row string.
+                        else if (universe[x, y] == false)
+                            currentRow += '.';
+                    }
+
+                    // Once the current row has been read through and the 
+                    // string constructed then write it to the file using WriteLine.
+                    writer.WriteLine(currentRow);
+                }
+
+                // After all rows and columns have been written then close the file.
+                writer.Close();
+            }
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = "All Files|*.*|Cells|*.cells";
+            dlg.FilterIndex = 2;
+
+            if (DialogResult.OK == dlg.ShowDialog())
+            {
+                StreamReader reader = new StreamReader(dlg.FileName);
+
+                // Create a couple variables to calculate the width and height
+                // of the data in the file.
+                int maxWidth = 0;
+                int maxHeight = 0;
+
+                // Iterate through the file once to get its size.
+                while (!reader.EndOfStream)
+                {
+                    // Read one row at a time.
+                    string row = reader.ReadLine();
+
+                    // If the row begins with '!' then it is a comment
+                    // and should be ignored.
+                    if(row.StartsWith("!"))
+                        reader.
+
+                    // If the row is not a comment then it is a row of cells.
+                    // Increment the maxHeight variable for each row read.
+                    if (row.StartsWith(!"!"))
+                        maxHeight++;
+
+                    // Get the length of the current row string
+                    // and adjust the maxWidth variable if necessary.
+                    maxWidth = row.Length;
+                }
+
+                // Resize the current universe and scratchPad
+                // to the width and height of the file calculated above.
+
+                // Reset the file pointer back to the beginning of the file.
+                reader.BaseStream.Seek(0, SeekOrigin.Begin);
+
+                // Iterate through the file again, this time reading in the cells.
+                while (!reader.EndOfStream)
+                {
+                    // Read one row at a time.
+                    string row = reader.ReadLine();
+
+                    // If the row begins with '!' then
+                    // it is a comment and should be ignored.
+
+                    // If the row is not a comment then 
+                    // it is a row of cells and needs to be iterated through.
+                    for (int xPos = 0; xPos < row.Length; xPos++)
+                    {
+                        // If row[xPos] is a 'O' (capital O) then
+                        // set the corresponding cell in the universe to alive.
+
+                        // If row[xPos] is a '.' (period) then
+                        // set the corresponding cell in the universe to dead.
+                    }
+                }
+
+                // Close the file.
+                reader.Close();
+            }
+        }
+
+        private void Randomize()
+        {
+            //Random rand = new Random(); Time
+            //taks a seed for a seed
+
+            for (int y = 0; y < universe.GetLength(1); y++)
+            {
+                for (int x = 0; x < universe.GetLength(0); x++)
+                {
+                    //Call next
+
+                    //if random number == 0; turn on
+
+                }
+            }
         }
     }
 }
