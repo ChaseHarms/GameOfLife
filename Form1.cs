@@ -65,10 +65,10 @@ namespace GameOfLife
                 {
                     // int count = count neighbor
                     int count = 0;
-                    if(finiteOn == true)
-                    count = CountNeighborsFinite(x, y);
+                    if (finiteOn == true)
+                        count = CountNeighborsFinite(x, y);
                     else if (toroidalOn == true)
-                    count = CountNeighborsToroidal(x, y);
+                        count = CountNeighborsToroidal(x, y);
 
                     // Apply the rules
                     // Rule 1
@@ -81,7 +81,7 @@ namespace GameOfLife
                     if (universe[x, y] == true && count == 2 || count == 3)
                         scratchPad[x, y] = true;
                     // Rule 4
-                    if (universe[x, y] == false)
+                    if (universe[x, y] == false)    //crash error here problem with universe resizing and rules
                     {
                         if (count == 3)
                             scratchPad[x, y] = true;
@@ -126,7 +126,7 @@ namespace GameOfLife
         {
             NextGeneration();
         }
-        
+
         private void graphicsPanel1_Paint(object sender, PaintEventArgs e)
         {
             // FLOATS!!!!!
@@ -212,7 +212,7 @@ namespace GameOfLife
                 }
             }
             //HUD Display
-            if(HUDon == true)
+            if (HUDon == true)
             {
                 //formatting
                 Font fontHUD = new Font("Microsoft Sans Serif", 12f);
@@ -483,8 +483,11 @@ namespace GameOfLife
             {
                 // modify
                 timer.Interval = dlg.getTimer();
+                int width = dlg.getXaxis();
+                int height = dlg.getYaxis();
 
-                //universe = new bool[width, height];
+                universe = new bool[width, height];     //width & height are the inputs from dialog box
+                scratchPad = new bool[width, height];
 
                 graphicsPanel1.Invalidate();
             }
@@ -615,6 +618,7 @@ namespace GameOfLife
                 // of the data in the file.
                 int maxWidth = 0;
                 int maxHeight = 0;
+                int yPos = 0;
 
                 // Iterate through the file once to get its size.
                 while (!reader.EndOfStream)
@@ -624,12 +628,12 @@ namespace GameOfLife
 
                     // If the row begins with '!' then it is a comment
                     // and should be ignored.
-                    if(row.StartsWith("!"))
-                        reader.
+                    if (row.StartsWith("!"))
+                        continue;
 
                     // If the row is not a comment then it is a row of cells.
                     // Increment the maxHeight variable for each row read.
-                    if (row.StartsWith(!"!"))
+                    if (row.StartsWith("!") == false)
                         maxHeight++;
 
                     // Get the length of the current row string
@@ -639,6 +643,10 @@ namespace GameOfLife
 
                 // Resize the current universe and scratchPad
                 // to the width and height of the file calculated above.
+                int width = maxWidth;
+                int height = maxHeight;
+                universe = new bool[width, height];
+                scratchPad = new bool[width, height];
 
                 // Reset the file pointer back to the beginning of the file.
                 reader.BaseStream.Seek(0, SeekOrigin.Begin);
@@ -651,6 +659,8 @@ namespace GameOfLife
 
                     // If the row begins with '!' then
                     // it is a comment and should be ignored.
+                    if (row.StartsWith("!"))
+                        continue;
 
                     // If the row is not a comment then 
                     // it is a row of cells and needs to be iterated through.
@@ -658,9 +668,15 @@ namespace GameOfLife
                     {
                         // If row[xPos] is a 'O' (capital O) then
                         // set the corresponding cell in the universe to alive.
+                        if (row[xPos] == 'O')
+                            universe[xPos, yPos] = true;
 
                         // If row[xPos] is a '.' (period) then
                         // set the corresponding cell in the universe to dead.
+                        if(row[xPos] == '.')
+                            universe[xPos, yPos] = false;
+
+                        yPos++;
                     }
                 }
 
